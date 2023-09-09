@@ -10,7 +10,8 @@ import (
 
 type (
 	Server struct {
-		apiEngine *gorestapi.Server
+		apiEngine   *gorestapi.Server
+		metricStore *MetricsStore
 	}
 )
 
@@ -21,6 +22,9 @@ func NewServer() (server *Server, err error) {
 		os.Exit(-1)
 	}
 	if err = server.Setup(); err != nil {
+		return
+	}
+	if server.metricStore, err = NewMetricStore(); err != nil {
 		return
 	}
 	return
@@ -34,7 +38,8 @@ func successHandler(c *gin.Context) {
 }
 
 func (server *Server) Setup() (err error) {
-	server.apiEngine.AddRoute(gorestapi.Route{"/api/success", "GET", successHandler, false})
+	server.apiEngine.AddRoute(gorestapi.Route{"/metrics", "POST", server.MetricsAddHandler, false})
+	server.apiEngine.AddRoute(gorestapi.Route{"/metrics", "GET", server.MetricsListHandler, false})
 	return
 }
 
